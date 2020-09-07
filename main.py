@@ -67,10 +67,16 @@ class Main:
     def build_application(self):
         builder = Builder()
         
-        # Generate R.java from resources
-        Print.printBold('> Generating <R.java> using [aapt]...', end='')
-        process = builder.generate_resource_ids()
-        if not self.print_task_end("aapt", process):
+        # Compile android raw resources
+        Print.printBold('> Compiling <resources> using [aapt2]...', end='')
+        process = builder.compile_resources()
+        if not self.print_task_end("aapt2", process):
+            return
+
+        # Link AndroidManifest.xml and generate R.java
+        Print.printBold('\n> Linking <resources> using [aapt2]...', end='')
+        process = builder.link_resources()
+        if not self.print_task_end("aapt2", process):
             return
 
         # Compile java source code
@@ -85,16 +91,10 @@ class Main:
         if not self.print_task_end('d8', process):
             return
 
-        # Generate resources.arsc from dex files and resources
-        Print.printBold("\n> Generating <resources.arsc> using [aapt]...", end='')
-        process = builder.compile_resources()
-        if not self.print_task_end('aapt', process):
-            return
-
         # Create apk from resources.arsc and classes.dex
-        Print.printBold("\n> Creating <apk> using [aapt]...", end='')
-        process = builder.create_apk_file()
-        if not self.print_task_end('aapt', process):
+        Print.printBold("\n> Adding <dex> to <apk> using [zip]...", end='')
+        process = builder.add_dex_to_apk()
+        if not self.print_task_end('zip', process):
             return
 
         # Align and sign in apk

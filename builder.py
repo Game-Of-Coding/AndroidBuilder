@@ -28,8 +28,15 @@ class Builder:
     def refresh_build(self):
         pass
 
-    def generate_resource_ids(self):
-        command = f'aapt package -f -m -M {manifests} -S {resource_dirs} -J {constant.DIR_BUILD_GEN}'
+    def compile_resources(self):
+        command = f'aapt2 compile --dir {resource_dirs} -o {constant.FILE_RESOURCES_ZIP}'
+        return cmd(command)
+
+    def link_resources(self):
+        assets_arg = ''
+        if asset_dirs.strip():
+            assets_arg = f'-A {asset_dirs}'
+        command = f'aapt2 link -I {constant.FILE_ANDROID_JAR} -o {constant.FILE_UNSIGNED_UNALIGNED_APK} --manifest {manifests} {constant.FILE_RESOURCES_ZIP} {assets_arg} --java {constant.DIR_BUILD_GEN}'
         return cmd(command)
 
     def compile_source_code(self):
@@ -50,17 +57,9 @@ class Builder:
 
     def merge_dexes(self):
         pass
-    
-    def compile_resources(self):
-        assets = ''
-        if asset_dirs.strip():
-            assets = f'-A {asset_dirs}' 
-        command = f'aapt package -f -M {manifests} -S {resource_dirs} {assets} -F {constant.FILE_RESOURCES_ARSC}'
-        return cmd(command)
 
-    def create_apk_file(self):
-        rename(constant.FILE_RESOURCES_ARSC, constant.FILE_UNSIGNED_UNALIGNED_APK)
-        command = f'aapt add -f {constant.FILE_UNSIGNED_UNALIGNED_APK} {constant.FILE_CLASSES_DEX_FILE}'
+    def add_dex_to_apk(self):
+        command = f'zip -jr {constant.FILE_UNSIGNED_UNALIGNED_APK} {constant.FILE_CLASSES_DEX_FILE}'
         return cmd(command)
 
     def sign_and_align_apk(self):
